@@ -1,0 +1,86 @@
+#include <LiquidCrystal.h>
+
+// LCD
+const int rs = 7, en = 8, d4 = 9, d5 = 10, d6 = 11, d7 = 12;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+// Pot
+int potPin = A0;
+int potVal = 0;
+
+int sipsCounter = 0;
+bool isBlocked = false;
+
+// Ultrasonic
+const int trigPin = 2;
+const int echoPin = 3;
+
+// Buzzer
+const int buzzer = 7;
+
+long duration;
+int distance;
+
+const int maxDistance = 60;
+const int minDistance = 1;
+
+//Button
+int buttonPin = 6;
+int buttonNew;
+int buttonOld = 1;
+
+void setup() {
+  Serial.begin(9600);
+
+  lcd.begin(16, 2);
+  lcd.clear();
+
+  //pinMode(redPin, OUTPUT);
+  //pinMode(greenPin, OUTPUT);
+  //pinMode(bluePin, OUTPUT);
+
+  pinMode(buttonPin, INPUT);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzer, OUTPUT);
+}
+
+void loop() {
+  measureDistance();
+
+  if (distance < 10 && !isBlocked) {
+    sipsCounter++;
+    isBlocked = true;
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Sips: ");
+    lcd.print(sipsCounter);
+  } else if (distance >= 10) {
+    isBlocked = false;
+  }
+
+  buttonNew = digitalRead(buttonPin);
+  if (buttonNew == 1 && buttonOld == 0) {
+    sipsCounter = 0;
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Sips: ");
+    lcd.print(sipsCounter);
+  }
+  buttonOld = buttonNew;
+
+  delay(200);
+}
+
+void measureDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+}
